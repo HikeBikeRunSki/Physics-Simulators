@@ -1,0 +1,1056 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IB Physics — Circuit Simulator · B.5</title>
+<style>*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f0f4f8;--surf:#fff;--bdr:#e2e8f0;--txt:#1e293b;--muted:#64748b;--acc:#3b82f6;--acc2:#1d4ed8;--grn:#16a34a;--pur:#7c3aed;--red:#dc2626;--or:#b45309;--sh:0 1px 3px rgba(0,0,0,.1),0 1px 2px rgba(0,0,0,.06);}
+body{font-family:'Segoe UI',system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--txt);height:100dvh;display:flex;flex-direction:column;overflow:hidden;font-size:14px;}
+#modal{position:fixed;inset:0;z-index:200;background:linear-gradient(145deg,#0f172a,#1e3a5f 50%,#0f172a);display:flex;align-items:center;justify-content:center;transition:opacity .35s;}
+#modal.gone{opacity:0;pointer-events:none}
+.mi{background:#fff;border-radius:20px;padding:36px 30px 30px;max-width:510px;width:93%;text-align:center;box-shadow:0 24px 80px rgba(0,0,0,.45);}
+.mi-logo{font-size:3rem;margin-bottom:6px}.mi h1{font-size:1.55rem;font-weight:800;letter-spacing:-.03em;margin-bottom:3px}.mi .sub{color:var(--muted);font-size:.85rem;margin-bottom:22px}
+.mode-grid{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:4px}
+.mbtn{flex:1;min-width:128px;max-width:158px;padding:16px 9px;border-radius:13px;border:2.5px solid;background:var(--bg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .15s,box-shadow .15s;text-align:center;}
+.mbtn:hover{transform:translateY(-3px);box-shadow:0 10px 28px rgba(0,0,0,.18)}.mbtn.ml{border-color:var(--grn)}.mbtn.ml:hover{background:#f0fdf4}.mbtn.ms{border-color:var(--pur)}.mbtn.ms:hover{background:#faf5ff}.mbtn.ma{border-color:#ea580c}.mbtn.ma:hover{background:#fff7ed}
+.mi-ic{font-size:1.7rem;line-height:1}.mi-tt{font-weight:700;font-size:.88rem;color:var(--txt)}.mi-ds{font-size:.72rem;color:var(--muted);line-height:1.3}
+.mi-sub{display:none;text-align:center}.mi-sub.show{display:block}
+.mi-sub h2{font-size:1.05rem;font-weight:700;margin-bottom:3px}.mi-sub .sub2{font-size:.79rem;color:var(--muted);margin-bottom:16px}
+.sub-grid{display:flex;gap:11px;justify-content:center;flex-wrap:wrap}
+.sbtn{flex:1;min-width:150px;max-width:195px;padding:14px 11px;border-radius:12px;border:2px solid;background:var(--bg);cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;transition:transform .15s,box-shadow .12s;text-align:center;}
+.sbtn:hover{transform:translateY(-2px);box-shadow:0 8px 20px rgba(0,0,0,.14)}.sbtn.s1{border-color:var(--grn)}.sbtn.s1:hover{background:#f0fdf4}.sbtn.s2{border-color:#0ea5e9}.sbtn.s2:hover{background:#f0f9ff}
+.sbtn-ic{font-size:1.5rem;line-height:1}.sbtn-tt{font-weight:700;font-size:.86rem;color:var(--txt)}.sbtn-ds{font-size:.71rem;color:var(--muted);line-height:1.3}
+.back-btn{margin-top:14px;background:none;border:1.5px solid var(--bdr);color:var(--muted);padding:6px 18px;border-radius:7px;cursor:pointer;font-size:.8rem;}.back-btn:hover{background:var(--bg)}
+#topbar{background:var(--txt);color:#fff;padding:6px 14px;display:flex;align-items:center;justify-content:space-between;gap:10px;flex-shrink:0;min-height:44px;}
+.tl{display:flex;align-items:center;gap:9px}.tr{display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+#app-title{font-weight:700;font-size:.88rem;white-space:nowrap;opacity:.95}
+#mode-badge{font-size:.66rem;font-weight:700;padding:2px 9px;border-radius:100px;text-transform:uppercase;letter-spacing:.05em;white-space:nowrap;}
+#mode-badge.ml{background:#dcfce7;color:#15803d}#mode-badge.ms{background:#ede9fe;color:#6d28d9}#mode-badge.ma{background:#fed7aa;color:#9a3412}
+.emfc{display:flex;align-items:center;gap:4px;background:rgba(255,255,255,.1);border-radius:7px;padding:3px 8px;font-size:.82rem;}
+.emfc label{color:rgba(255,255,255,.65);font-size:.73rem}.emfc button{background:rgba(255,255,255,.15);border:none;color:#fff;width:22px;height:22px;border-radius:4px;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;transition:background .12s;}.emfc button:hover{background:rgba(255,255,255,.3)}
+#emf-v{min-width:22px;text-align:center;font-weight:700}
+.tbtn{background:rgba(255,255,255,.12);border:none;color:#fff;padding:4px 10px;border-radius:6px;cursor:pointer;font-size:.76rem;font-weight:600;transition:background .12s;white-space:nowrap;}.tbtn:hover{background:rgba(255,255,255,.25)}.tbtn:disabled{opacity:.28;cursor:not-allowed}
+#main{display:flex;flex:1;min-height:0;overflow:hidden}
+#cp{flex:1;min-width:0;display:flex;flex-direction:column;background:#fff;border-right:1px solid var(--bdr);overflow:hidden;position:relative;}
+#cscroll{flex:1;overflow:auto;padding:12px 10px 10px;display:flex;align-items:flex-start;}
+#zoom-wrap{transform-origin:0 0;transition:transform .15s;}
+#zoom-bar{position:absolute;bottom:12px;left:12px;z-index:20;display:flex;align-items:center;gap:2px;background:rgba(255,255,255,.92);border:1px solid var(--bdr);border-radius:8px;padding:3px 4px;box-shadow:var(--sh);}
+.zbtn{background:none;border:none;cursor:pointer;width:26px;height:26px;border-radius:5px;font-size:.9rem;font-weight:700;color:var(--txt);display:flex;align-items:center;justify-content:center;transition:background .1s;}.zbtn:hover{background:var(--bg)}
+#zoom-pct{font-size:.69rem;font-weight:700;color:var(--muted);min-width:30px;text-align:center;}
+#guide-panel{display:none;background:linear-gradient(to bottom,#eff6ff,#f8faff);border-top:2.5px solid var(--acc);flex-shrink:0;overflow:hidden;transition:max-height .3s ease;max-height:210px;}
+#guide-panel.min{max-height:36px;}#guide-panel.min .gp-body,#guide-panel.min .gp-foot{display:none!important;}
+.gp-hd{display:flex;align-items:center;justify-content:space-between;padding:7px 12px;cursor:pointer;user-select:none;min-height:36px;}.gp-hd:hover{background:rgba(59,130,246,.04)}
+.gp-hl{display:flex;align-items:center;gap:7px;flex:1;min-width:0;overflow:hidden;}
+.gp-num{font-size:.65rem;font-weight:700;background:var(--acc);color:#fff;padding:1px 7px;border-radius:100px;white-space:nowrap;flex-shrink:0;}
+.gp-title{font-size:.84rem;font-weight:700;color:var(--txt);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+.gp-btns{display:flex;gap:4px;flex-shrink:0;}
+.gp-ibtn{background:rgba(59,130,246,.12);border:none;cursor:pointer;border-radius:5px;font-size:.73rem;font-weight:600;color:var(--acc2);padding:3px 8px;transition:background .1s;white-space:nowrap;}.gp-ibtn:hover{background:rgba(59,130,246,.22)}
+.gp-body{padding:2px 14px 8px;font-size:.81rem;line-height:1.52;color:var(--txt);overflow-y:auto;max-height:122px;}
+.gp-body p{margin-bottom:4px}.gp-body ol,.gp-body ul{margin-left:18px;margin-bottom:4px}.gp-body li{margin-bottom:2px}
+.gp-task{background:#fef9c3;border:1px solid #fde68a;border-radius:5px;padding:4px 8px;margin-top:5px!important;color:#854d0e;font-weight:600;display:block;}
+.gp-foot{padding:5px 14px 10px;display:flex;justify-content:flex-end;}
+.gp-next{background:var(--acc);color:#fff;border:none;border-radius:6px;padding:6px 18px;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .12s;}.gp-next:hover{background:var(--acc2)}
+#ass-bar{background:linear-gradient(to right,#fff7ed,#fffbf5);border-top:2.5px solid #ea580c;flex-shrink:0;padding:8px 14px;display:none;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap;}
+#ass-bar.show{display:flex}
+.ass-dots{display:flex;gap:5px}.ass-dot{width:14px;height:14px;border-radius:50%;border:2px solid #d1d5db;background:#fff;transition:all .25s;}.ass-dot.ok{background:var(--grn);border-color:var(--grn);}.ass-dot.no{background:var(--red);border-color:var(--red);}.ass-dot.curr{background:#ea580c;border-color:#ea580c;box-shadow:0 0 0 3px rgba(234,88,12,.2);}
+.ass-label{font-size:.82rem;font-weight:700;color:#9a3412}.ass-diff{font-size:.73rem;color:var(--muted)}
+#ass-next-btn{background:#ea580c;color:#fff;border:none;border-radius:7px;padding:7px 18px;font-size:.82rem;font-weight:700;cursor:pointer;transition:background .12s;display:none;}.ass-next-show{display:block!important}
+#score-screen{display:none;position:absolute;inset:0;z-index:50;background:#fff;align-items:center;justify-content:center;flex-direction:column;padding:30px;text-align:center;}
+#score-screen.show{display:flex}
+.sc-title{font-size:2rem;font-weight:800;margin-bottom:6px}.sc-sub{color:var(--muted);font-size:.9rem;margin-bottom:22px}
+.sc-score{font-size:3.5rem;font-weight:900;margin-bottom:6px}.sc-results{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;margin-bottom:22px}
+.sc-item{padding:7px 13px;border-radius:10px;font-size:.82rem;font-weight:600;display:flex;align-items:center;gap:5px;}
+.sc-item.ok{background:#f0fdf4;color:var(--grn);border:1.5px solid #bbf7d0}.sc-item.no{background:#fef2f2;color:var(--red);border:1.5px solid #fecaca}
+.sc-again{background:var(--acc);color:#fff;border:none;border-radius:8px;padding:10px 28px;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .12s;}.sc-again:hover{background:var(--acc2)}
+#solp{max-height:0;overflow:hidden;border-top:2px solid var(--bdr);transition:max-height .32s ease;background:#fff;}
+#solp.open{max-height:240px;overflow-y:auto}
+.sol-hd{display:flex;justify-content:space-between;align-items:center;padding:9px 16px 5px;border-bottom:1px solid var(--bdr);font-size:.84rem;font-weight:700;}
+.sol-close{background:none;border:none;cursor:pointer;color:var(--muted);font-size:1.1rem;padding:0 5px;border-radius:4px;}.sol-close:hover{background:var(--bg)}
+#sol-steps{padding:7px 16px 12px;font-size:.83rem;line-height:1.65}
+.ss{display:flex;gap:8px;align-items:flex-start;padding:4px 0;border-bottom:1px solid var(--bdr);}.ss:last-child{border:none;font-weight:700}
+.sn{background:var(--acc);color:#fff;min-width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;margin-top:2px;}.sn.fin{background:var(--grn)}
+#log-modal{position:fixed;inset:0;z-index:150;display:none;align-items:center;justify-content:center;}
+#log-modal.open{display:flex}
+.log-ov{position:absolute;inset:0;background:rgba(0,0,0,.5);}
+.log-box{position:relative;background:#fff;border-radius:14px;max-width:480px;width:92%;max-height:75vh;display:flex;flex-direction:column;box-shadow:0 20px 60px rgba(0,0,0,.35);}
+.log-hd{display:flex;justify-content:space-between;align-items:center;padding:14px 18px 10px;border-bottom:1px solid var(--bdr);font-weight:700;font-size:.94rem;}
+.log-cl{background:none;border:none;cursor:pointer;font-size:1.1rem;color:var(--muted);padding:2px 6px;border-radius:4px;}.log-cl:hover{background:var(--bg)}
+.log-body{overflow-y:auto;padding:8px 18px 16px;}
+.log-entry{padding:9px 0;border-bottom:1px solid var(--bdr);}.log-entry:last-child{border:none}
+.log-ehd{display:flex;align-items:center;gap:8px;margin-bottom:3px;}
+.log-ic{width:20px;height:20px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.68rem;font-weight:700;flex-shrink:0;}
+.log-ic.done{background:var(--grn);color:#fff}.log-ic.curr{background:var(--acc);color:#fff}.log-ic.todo{background:var(--bdr);color:var(--muted)}
+.log-etitle{font-size:.86rem;font-weight:700}.log-etitle.todo{color:var(--muted);font-weight:500}.log-ebody{font-size:.77rem;color:var(--muted);margin-left:28px;line-height:1.4}.log-ebody p{margin-bottom:3px}
+#sb{width:260px;min-width:244px;background:var(--bg);overflow-y:auto;padding:9px;display:flex;flex-direction:column;gap:8px;flex-shrink:0;}
+.sec{background:var(--surf);border:1px solid var(--bdr);border-radius:10px;padding:10px 12px;box-shadow:var(--sh);}
+.sec-t{font-size:.64rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);padding-bottom:7px;margin-bottom:8px;border-bottom:1px solid var(--bdr);}
+.acc-item{margin-bottom:3px}.acc-item:last-child{margin-bottom:0}
+.acc-hd{display:flex;align-items:center;justify-content:space-between;padding:1px 0;}
+.acc-lbl{display:flex;align-items:center;gap:7px;cursor:pointer;font-size:.84rem;flex:1;user-select:none;padding:4px 2px;}
+.acc-lbl input[type=checkbox]{width:15px;height:15px;cursor:pointer;accent-color:var(--acc);flex-shrink:0;}
+.rr{color:var(--or);font-weight:600}.rv{color:var(--red);font-weight:600}.ri{color:var(--acc2);font-weight:600}.rvo{color:var(--pur);font-weight:600}
+.acc-arr{background:none;border:none;cursor:pointer;font-size:.62rem;color:var(--muted);padding:3px 8px;border-radius:4px;transition:transform .2s,background .1s;line-height:1;flex-shrink:0;}.acc-arr:hover{background:var(--bg);color:var(--txt)}.acc-arr.open{transform:rotate(90deg)}
+.acc-body{display:none;background:var(--bg);border:1px solid var(--bdr);border-radius:7px;padding:6px 5px;margin-top:3px;}
+.acc-body.show{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;}
+.rck{display:flex;align-items:center;gap:3px;font-size:.73rem;cursor:pointer;padding:4px 5px;border-radius:4px;user-select:none;}.rck:hover{background:var(--surf)}
+.rck input{width:12px;height:12px;cursor:pointer;accent-color:var(--acc);flex-shrink:0;}.rck-lbl{color:var(--txt);font-weight:600;white-space:nowrap;}.rck-val{color:var(--muted);font-size:.65rem;}
+.sb-hint{font-size:.82rem;color:var(--muted);text-align:center;padding:5px 0;line-height:1.4}
+.sel-inf{font-size:.81rem;color:var(--muted);padding-bottom:6px;text-align:center}.sel-inf strong{color:var(--txt)}
+.addbtn{width:100%;padding:8px 10px;border:1.5px solid;border-radius:7px;cursor:pointer;font-size:.81rem;font-weight:600;margin-bottom:5px;text-align:left;transition:background .12s,transform .1s;}
+.addbtn:hover:not(:disabled){transform:translateX(2px)}.addbtn.as{background:#eff6ff;color:#1d4ed8;border-color:#bfdbfe}.addbtn.as:hover:not(:disabled){background:#dbeafe}
+.addbtn.ap{background:#f0fdf4;color:#15803d;border-color:#bbf7d0}.addbtn.ap:hover:not(:disabled){background:#dcfce7}
+.addbtn.ad{background:#fef2f2;color:var(--red);border-color:#fecaca}.addbtn.ad:hover:not(:disabled){background:#fee2e2}
+.addbtn.av{background:#faf5ff;color:#6d28d9;border-color:#e9d5ff}.addbtn.av:hover:not(:disabled){background:#f3e8ff}
+.addbtn:disabled{background:#f1f5f9;color:var(--muted);border-color:var(--bdr);cursor:not-allowed;opacity:.5}
+.lock-msg{font-size:.75rem;color:#92400e;background:#fffbeb;border:1px solid #fde68a;border-radius:5px;padding:4px 8px;margin-top:2px;line-height:1.3;}
+@keyframes upulse{0%,100%{transform:scale(1);box-shadow:none}40%{transform:scale(1.04);box-shadow:0 0 14px rgba(22,163,74,.4)}}
+.pulse{animation:upulse .5s ease 3}
+.chal-q{font-size:.86rem;margin-bottom:9px;line-height:1.4}
+.vout-box{background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:7px;padding:6px 10px;margin:0 0 8px;font-size:.82rem;text-align:center;}
+.ans-row{display:flex;align-items:center;gap:5px;margin-bottom:7px;}
+.ans-unit{color:var(--muted);white-space:nowrap;font-size:.86rem}
+.ans-row input{flex:1;min-width:0;padding:6px 8px;border:2px solid var(--bdr);border-radius:6px;font-size:.88rem;color:var(--txt);transition:border-color .15s;-moz-appearance:textfield;}
+.ans-row input::-webkit-outer-spin-button,.ans-row input::-webkit-inner-spin-button{-webkit-appearance:none}
+.ans-row input:focus{outline:none;border-color:var(--acc)}.ans-row input:disabled{background:#f8fafc;color:var(--muted)}
+.sub-btn{width:100%;padding:8px;background:var(--acc);color:#fff;border:none;border-radius:7px;cursor:pointer;font-size:.86rem;font-weight:700;transition:background .12s;}.sub-btn:hover:not(:disabled){background:var(--acc2)}.sub-btn:disabled{opacity:.4;cursor:not-allowed}
+.sub-btn.vout-sub{background:#7c3aed;}.sub-btn.vout-sub:hover:not(:disabled){background:#6d28d9}
+.fb{min-height:18px;font-size:.81rem;margin-top:5px}.fb.ok{color:var(--grn);font-weight:700}.fb.no{color:var(--red);font-weight:600}
+.help-row{display:flex;gap:5px;margin-top:7px;flex-wrap:wrap}
+.hbtn{flex:1;min-width:78px;padding:6px 7px;border-radius:6px;border:1.5px solid;cursor:pointer;font-size:.77rem;font-weight:600;transition:all .12s;}
+.hh{background:#fef9c3;color:#854d0e;border-color:#fde68a}.hh:hover,.hh.on{background:#fef08a}.hs{background:#fdf4ff;color:#6b21a8;border-color:#e9d5ff}.hs:hover{background:#f3e8ff}
+.topic-tag{font-size:.69rem;color:var(--muted);text-align:center;padding:4px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%) translateY(20px);background:#1e293b;color:#fff;padding:9px 20px;border-radius:100px;font-size:.84rem;font-weight:600;z-index:300;opacity:0;transition:all .3s;box-shadow:0 4px 20px rgba(0,0,0,.3);pointer-events:none;max-width:90vw;text-align:center;}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+@media(max-width:640px){#main{flex-direction:column;overflow-y:auto}#cp{min-height:260px;border-right:none;border-bottom:1px solid var(--bdr)}#cscroll{overflow:visible;min-height:220px;padding:10px}#sb{width:100%;min-width:100%}#app-title{display:none}#solp.open{max-height:unset;overflow:visible}#guide-panel{max-height:180px}}</style>
+</head>
+<body>
+<div id="modal"><div class="mi">
+<div id="modal-main"><div class="mi-logo">&#x26A1;</div><h1>Circuit Simulator</h1><p class="sub">IB Physics &middot; Topic B.5 &middot; Electric Circuits</p>
+<div class="mode-grid">
+<button class="mbtn ml" onclick="showLearningPicker()"><span class="mi-ic">&#128218;</span><span class="mi-tt">Step-by-Step Learning</span><span class="mi-ds">Guided tutorials with physics</span></button>
+<button class="mbtn ms" onclick="selectMode('sandbox',null)"><span class="mi-ic">&#128300;</span><span class="mi-tt">Sandbox Mode</span><span class="mi-ds">Build any circuit freely</span></button>
+<button class="mbtn ma" onclick="selectMode('assessment',null)"><span class="mi-ic">&#128221;</span><span class="mi-tt">Assessment Quiz</span><span class="mi-ds">5 circuits, increasing difficulty</span></button>
+</div></div>
+<div class="mi-sub" id="modal-learning">
+<h2>&#128218; Step-by-Step Learning</h2><p class="sub2">Choose a topic:</p>
+<div class="sub-grid">
+<button class="sbtn s1" onclick="selectMode('learning','essentials')"><span class="sbtn-ic">&#9889;</span><span class="sbtn-tt">Circuit Rule Essentials</span><span class="sbtn-ds">Series, parallel and Ohm&#8217;s Law &mdash; 10 guided steps</span></button>
+<button class="sbtn s2" onclick="selectMode('learning','potdiv')"><span class="sbtn-ic">&#9882;&#65039;</span><span class="sbtn-tt">Potential Divider Circuits</span><span class="sbtn-ds">V<sub>out</sub> formula &amp; sensor applications &mdash; 8 steps</span></button>
+</div>
+<button class="back-btn" onclick="showMainPicker()">&#8592; Back</button>
+</div>
+</div></div>
+
+<div id="log-modal"><div class="log-ov" onclick="closeLog()"></div>
+<div class="log-box"><div class="log-hd"><span>&#128218; Tutorial Progress</span><button class="log-cl" onclick="closeLog()">&#10005;</button></div>
+<div class="log-body" id="log-body"></div></div></div>
+
+<div id="app">
+<header id="topbar">
+<div class="tl"><span id="app-title">&#x26A1; IB Circuit Simulator</span><span id="mode-badge"></span></div>
+<div class="tr">
+<div class="emfc"><label>EMF</label><button onclick="changeEmf(-1)">&#8722;</button><span id="emf-v">12</span><label>V</label><button onclick="changeEmf(1)">+</button></div>
+<button class="tbtn" id="undo-btn" onclick="doUndo()">&#8617; Undo</button>
+<button class="tbtn" id="reset-btn" onclick="doReset()">&#8634; Reset</button>
+<button class="tbtn" id="guide-btn" onclick="showGuide()" style="display:none">&#128218; Guide</button>
+<button class="tbtn" onclick="openModal()">&#8644; Mode</button>
+</div></header>
+
+<div id="main">
+<div id="cp">
+  <div id="cscroll">
+    <div id="zoom-wrap"><div id="cctr"></div></div>
+  </div>
+  <!-- Zoom controls -->
+  <div id="zoom-bar">
+    <button class="zbtn" onclick="zoomOut()" title="Zoom out">&#8722;</button>
+    <span id="zoom-pct">100%</span>
+    <button class="zbtn" onclick="zoomIn()" title="Zoom in">+</button>
+    <button class="zbtn" onclick="autoFit()" title="Fit to window" style="font-size:.62rem;width:auto;padding:0 6px">Fit</button>
+  </div>
+  <!-- Assessment bar -->
+  <div id="ass-bar">
+    <div style="display:flex;align-items:center;gap:8px"><span class="ass-label" id="ass-label">Circuit 1/5</span><span class="ass-diff" id="ass-diff"></span><div class="ass-dots" id="ass-dots"></div></div>
+    <button id="ass-next-btn" onclick="assNext()">Next Circuit &#8594;</button>
+  </div>
+  <!-- Score overlay -->
+  <div id="score-screen">
+    <div class="sc-title">&#127881; Assessment Complete!</div><div class="sc-sub">Here are your results:</div>
+    <div class="sc-score" id="sc-score">0/5</div><div class="sc-results" id="sc-results"></div>
+    <button class="sc-again" onclick="startAssessment()">Try Again</button>
+  </div>
+  <!-- Guide panel -->
+  <div id="guide-panel">
+    <div class="gp-hd" onclick="toggleGuideMin()">
+      <div class="gp-hl"><span class="gp-num" id="gp-num"></span><span class="gp-title" id="gp-title"></span></div>
+      <div class="gp-btns" onclick="event.stopPropagation()">
+        <button class="gp-ibtn" onclick="openLog()">&#128218; History</button>
+        <button class="gp-ibtn" id="gp-min-lbl" onclick="toggleGuideMin()">&#8722; Hide</button>
+      </div>
+    </div>
+    <div class="gp-body" id="gp-body"></div>
+    <div class="gp-foot" id="gp-foot" style="display:none"><button class="gp-next" onclick="handleNextClick()">Next &#8594;</button></div>
+  </div>
+  <!-- Worked solution panel -->
+  <div id="solp">
+    <div class="sol-hd"><span>&#128221; Worked Solution</span><button class="sol-close" onclick="hideSol()">&#10005;</button></div>
+    <div id="sol-steps"></div>
+  </div>
+</div>
+
+<aside id="sb">
+  <!-- REVEAL VALUES -->
+  <div class="sec">
+    <div class="sec-t">Reveal Values</div>
+    <div class="acc-item">
+      <div class="acc-hd">
+        <label class="acc-lbl" onclick="event.stopPropagation()"><input type="checkbox" id="ck-r" onchange="setMaster('R',this.checked)"><span class="rr">&#9642; Resistance (&Omega;)</span></label>
+        <button class="acc-arr" id="arr-R" onclick="toggleAcc('R')">&#9654;</button>
+      </div>
+      <div class="acc-body" id="acc-R"></div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-hd">
+        <label class="acc-lbl" onclick="event.stopPropagation()"><input type="checkbox" id="ck-v" onchange="setMaster('V',this.checked)"><span class="rv">&#9642; Voltage (V)</span></label>
+        <button class="acc-arr" id="arr-V" onclick="toggleAcc('V')">&#9654;</button>
+      </div>
+      <div class="acc-body" id="acc-V"></div>
+    </div>
+    <div class="acc-item" id="vout-acc-row" style="display:none">
+      <div class="acc-hd">
+        <label class="acc-lbl" onclick="event.stopPropagation()"><input type="checkbox" id="ck-vout" onchange="setShowVout(this.checked)"><span class="rvo">&#9670; V<sub>out</sub></span></label>
+      </div>
+    </div>
+    <div class="acc-item">
+      <div class="acc-hd">
+        <label class="acc-lbl" onclick="event.stopPropagation()"><input type="checkbox" id="ck-i" onchange="setMaster('I',this.checked)"><span class="ri">&#9642; Current (A)</span></label>
+        <button class="acc-arr" id="arr-I" onclick="toggleAcc('I')">&#9654;</button>
+      </div>
+      <div class="acc-body" id="acc-I"></div>
+    </div>
+  </div>
+
+  <!-- MODIFY -->
+  <div class="sec" id="modify-sec">
+    <div class="sec-t">Modify Circuit</div>
+    <p class="sb-hint" id="sel-hint">Click a resistor to select it</p>
+    <div id="sel-acts" style="display:none">
+      <p class="sel-inf" id="sel-inf"></p>
+      <button class="addbtn as" id="ser-btn" onclick="addComp('series')">&#xFF0B; Add in Series</button>
+      <button class="addbtn ap" id="par-btn" onclick="addComp('parallel')">&#xFF0B; Add in Parallel</button>
+      <button class="addbtn av" id="vout-btn" onclick="setVoutNode()">&#9900; Set V<sub>out</sub> Probe</button>
+      <button class="addbtn ad" id="del-btn" onclick="deleteSelected()">&#128465; Delete Selected</button>
+      <p class="lock-msg" id="lock-msg" style="display:none"></p>
+    </div>
+  </div>
+
+  <!-- Assessment info -->
+  <div class="sec" id="ass-info-sec" style="display:none">
+    <div class="sec-t">Assessment</div>
+    <p id="ass-info-text" style="font-size:.82rem;line-height:1.5;color:var(--muted)"></p>
+  </div>
+
+  <!-- R_total CHALLENGE -->
+  <div class="sec">
+    <div class="sec-t">Challenge</div>
+    <p class="chal-q" id="chal-q">What is the <strong>total resistance</strong>?</p>
+    <div class="vout-box" id="vout-hint-box" style="display:none"></div>
+    <div class="ans-row">
+      <span class="ans-unit" id="ans-lhs">R<sub>total</sub>&nbsp;=</span>
+      <input type="number" id="ans-in" inputmode="decimal" min="0" step="0.01" placeholder="?" onkeydown="if(event.key==='Enter')checkAns()">
+      <span class="ans-unit" id="ans-unit">&Omega;</span>
+    </div>
+    <button class="sub-btn" id="sub-btn" onclick="checkAns()">Submit &#8629;</button>
+    <div class="fb" id="fb"></div>
+    <div class="help-row" id="help-row" style="display:none">
+      <button class="hbtn hh" id="hint-btn" onclick="toggleHint()">&#128161; Hint</button>
+      <button class="hbtn hs" id="sol-btn" onclick="showSol()">&#128221; Solution</button>
+    </div>
+  </div>
+
+  <!-- V_out CHALLENGE (shown when probe is set) -->
+  <div class="sec" id="vout-chal-sec" style="display:none">
+    <div class="sec-t" style="color:var(--pur)">V<sub>out</sub> Challenge</div>
+    <p class="chal-q" id="vout-chal-q">What is <strong>V<sub>out</sub></strong>?</p>
+    <div class="vout-box" id="vout-formula-box"></div>
+    <div class="ans-row">
+      <span class="ans-unit">V<sub>out</sub>&nbsp;=</span>
+      <input type="number" id="vout-ans-in" inputmode="decimal" min="0" step="0.01" placeholder="?" onkeydown="if(event.key==='Enter')checkVout()">
+      <span class="ans-unit">V</span>
+    </div>
+    <button class="sub-btn vout-sub" id="vout-sub-btn" onclick="checkVout()">Submit &#8629;</button>
+    <div class="fb" id="vout-fb"></div>
+    <div class="help-row" id="vout-help-row" style="display:none">
+      <button class="hbtn hs" onclick="showVoutSol()">&#128221; Solution</button>
+    </div>
+  </div>
+
+  <div class="topic-tag">IB Physics &middot; B.5 &middot; Electric Circuits</div>
+</aside>
+</div></div>
+<script>'use strict';
+// IB Physics B.5 Circuit Simulator v5
+// Changes: multi-select, Vout probe, Vout challenge, zoom/autofit
+const R_W=44,R_H=18,WIRE=18,BGAP=30,RAIL=24,CPAD=56,BX=38,NX=96,BMIN=80,MAX_R=6,MAX_R_ASS=8;
+const NICE=[2,3,4,5,6,8,10,12,15,20];
+const C={wire:'#1e293b',res:'#1e293b',sel:'#3b82f6',junc:'#1e293b',batt:'#334155',lbl:'#64748b',rv:'#b45309',vv:'#dc2626',iv:'#2563eb',hs:'#16a34a',hp:'#d97706',pur:'#7c3aed'};
+
+// ── TUTORIALS ────────────────────────────────────────────────
+const ESSENTIALS=[
+  {id:'single',title:'Single Resistor',
+   getHtml(){const r=getAllR(ST.net)[0];return`<p>One resistor <strong>${r.id} = ${r.val}\u202F\u03A9</strong> connected to <strong>${ST.emf}\u202FV</strong>. With one component, R<sub>total</sub>\u202F=\u202F${r.id}.</p><span class="gp-task">\uD83D\uDCDD Enter <strong>${r.val}</strong> in the Challenge box and Submit.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['submit','select','emf','reveal'],advance:{type:'correct_answer'}},
+  {id:'ohms_law',title:"Ohm's Law",
+   getHtml(){const r=getAllR(ST.net)[0];return`<p>All EMF drops across ${r.id}: <strong>V = \u03B5 = ${ST.emf}\u202FV</strong>.</p><p>Ohm\u2019s Law: <strong>I = V/R = ${ST.emf}/${r.val} = ${fmt(ST.emf/r.val)}\u202FA</strong>.</p><span class="gp-task">\uD83D\uDCA1 Tick <em>Voltage</em> and <em>Current</em> in the sidebar, then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:true,I:true},challengeMode:'R',
+   allows:['next','emf','reveal','select'],advance:{type:'next_click'}},
+  {id:'add_series',title:'Add a Series Resistor',
+   getHtml(){return`<p>In <strong>series</strong>, components connect end-to-end. The <em>same current</em> flows through all. Adding resistors <em>increases</em> R<sub>total</sub>.</p><span class="gp-task">\uD83D\uDCDD Click <strong>R1</strong> to select it (turns blue), then press <strong>+ Add in Series</strong>.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['select','add_series','emf','reveal'],advance:{type:'circuit_change',changeType:'series'}},
+  {id:'series_answer',title:'Series Resistance',
+   getHtml(){const rs=getAllR(ST.net);return`<p><strong>Series rule:</strong> R<sub>total</sub> = R1 + R2 + \u2026</p><p style="text-align:center;font-weight:700;padding:5px;background:#f8fafc;border-radius:6px">R<sub>total</sub> = ${rs.map(r=>r.id+'\u2009('+r.val+'\u03A9)').join(' + ')}</p><span class="gp-task">\uD83D\uDCDD Calculate the sum and Submit.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['submit','hint','solution','emf','reveal','select'],advance:{type:'correct_answer'}},
+  {id:'series_insight',title:'Series Circuit Rules',
+   getHtml(){return`<p><strong>Three rules for series:</strong></p><ol><li>Same <strong>current</strong> through every component</li><li>Voltages <strong>add up</strong>: \u03A3V = \u03B5</li><li>Adding resistors <strong>increases</strong> R<sub>total</sub></li></ol><span class="gp-task">\uD83D\uDCA1 Tick Voltage and Current to verify these rules, then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:true,I:true},challengeMode:'R',
+   allows:['next','emf','reveal','select'],advance:{type:'next_click'}},
+  {id:'add_parallel',title:'Add a Parallel Resistor',
+   getHtml(){return`<p>In <strong>parallel</strong>, components share the same nodes. Same <em>voltage</em> across each branch. Adding branches <em>decreases</em> R<sub>total</sub>.</p><span class="gp-task">\uD83D\uDCDD Select any resistor, then press <strong>+ Add in Parallel</strong>.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['select','add_series','add_parallel','emf','reveal'],advance:{type:'circuit_change',changeType:'parallel'}},
+  {id:'parallel_answer',title:'Parallel Resistance',
+   getHtml(){return`<p>For a <strong>parallel group</strong>:</p><p style="text-align:center;font-weight:700;padding:5px;background:#f8fafc;border-radius:6px">1/R<sub>par</sub> = 1/R<sub>a</sub> + 1/R<sub>b</sub> + \u2026 \u2192 R<sub>par</sub> = 1 \u00F7 (sum of reciprocals)</p><p>Then add any series resistors. R<sub>total</sub> is always <em>less than</em> the smallest branch.</p><span class="gp-task">\uD83D\uDCDD Calculate R<sub>total</sub> and Submit. Use \uD83D\uDCA1\u202FHint for a scaffold.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['submit','hint','solution','emf','reveal','select'],advance:{type:'correct_answer'}},
+  {id:'parallel_insight',title:'Parallel Circuit Rules',
+   getHtml(){return`<p><strong>Three rules for parallel:</strong></p><ol><li>Same <strong>voltage</strong> across every branch</li><li>Currents <strong>add up</strong>: I<sub>total</sub> = \u03A3I<sub>branch</sub> (KCL)</li><li>Adding branches <strong>decreases</strong> R<sub>total</sub></li></ol><span class="gp-task">\uD83D\uDCA1 Tick Current to see it split between branches, then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:true,I:true},challengeMode:'R',
+   allows:['next','emf','reveal','select'],advance:{type:'next_click'}},
+  {id:'mixed_challenge',title:'Mixed Circuit Challenge',
+   getHtml(){const n=countR(ST.net),need=Math.max(0,4-n);return need>0?`<p>Combine series and parallel!</p><span class="gp-task">\uD83D\uDCDD Add ${need} more resistor${need>1?'s':''} (mix series &amp; parallel), then calculate R<sub>total</sub> and Submit.</span>`:`<p>${n} resistors in a mixed circuit. Apply the rules you have learned.</p><span class="gp-task">\uD83D\uDCDD Calculate R<sub>total</sub> and Submit.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['select','add_series','add_parallel','delete','submit','hint','solution','undo','emf','reveal'],advance:{type:'correct_answer',minR:4}},
+  {id:'complete',title:'Tutorial Complete! \uD83C\uDF89',
+   getHtml(){return`<p>Outstanding! All features are now unlocked. Use <strong>Hint</strong> for topology outlines and <strong>Solution</strong> for step-by-step breakdown.</p><p>Try setting a <strong>V<sub>out</sub> Probe</strong> by selecting a resistor and clicking \u201CSet V<sub>out</sub> Probe\u201D!</p>`;},
+   autoReveal:{R:false,V:false,I:false},challengeMode:'R',
+   allows:['select','add_series','add_parallel','delete','vout','submit','hint','solution','undo','reset','emf','reveal'],advance:null}
+];
+
+const POTDIV=[
+  {id:'pd_intro',title:'The Potential Divider',
+   getHtml(){const r=getAllR(ST.net)[0];return`<p>A <strong>potential divider</strong> uses two resistors in series to split a supply voltage proportionally. V<sub>out</sub> is measured <em>across one of them</em>.</p><span class="gp-task">\uD83D\uDCDD Click <strong>${r.id}</strong> to select it, then press <strong>+ Add in Series</strong>.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['select','add_series','emf','reveal'],advance:{type:'circuit_change',changeType:'series'}},
+  {id:'pd_rtotal',title:'Series Resistance (Recap)',
+   getHtml(){const rs=getAllR(ST.net);if(rs.length<2)return'<p>Add a second resistor first.</p>';const[r1,r2]=rs;return`<p>Your divider: <strong>${r1.id} = ${r1.val}\u03A9</strong> and <strong>${r2.id} = ${r2.val}\u03A9</strong>.</p><p style="text-align:center;font-weight:700;padding:5px;background:#f8fafc;border-radius:6px">R<sub>total</sub> = ${r1.val} + ${r2.val} = ${r1.val+r2.val}\u202F\u03A9</p><span class="gp-task">\uD83D\uDCDD Enter ${r1.val+r2.val} and Submit.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['submit','hint','solution','emf','reveal'],advance:{type:'correct_answer'}},
+  {id:'pd_current',title:'One Path, One Current',
+   getHtml(){const rs=getAllR(ST.net);if(rs.length<2)return'';const totalR=calcR(ST.net);return`<p>One path \u2192 <strong>same current I</strong> through both resistors:</p><p style="text-align:center;font-weight:700;padding:5px;background:#f8fafc;border-radius:6px">I = \u03B5\u00F7R<sub>total</sub> = ${ST.emf}\u00F7${fmt(totalR)} = ${fmt(ST.emf/totalR)}\u202FA</p><span class="gp-task">\uD83D\uDCA1 Tick <em>Current</em> to confirm I is identical through both resistors, then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:false,I:true},challengeMode:'R',
+   allows:['next','emf','reveal'],advance:{type:'next_click'}},
+  {id:'pd_vshare',title:'Voltage Shares Proportionally',
+   getHtml(){const rs=getAllR(ST.net);if(rs.length<2)return'';const[r1,r2]=rs;const totalR=calcR(ST.net);return`<p>Each resistor takes voltage proportional to its resistance:</p><p style="margin:3px 0">V<sub>1</sub> = \u03B5\u00D7R1/(R1+R2) = ${ST.emf}\u00D7${r1.val}/${fmt(totalR)} = <strong>${fmt(ST.emf*r1.val/totalR)}\u202FV</strong></p><p style="margin:3px 0">V<sub>2</sub> = \u03B5\u00D7R2/(R1+R2) = ${ST.emf}\u00D7${r2.val}/${fmt(totalR)} = <strong>${fmt(ST.emf*r2.val/totalR)}\u202FV</strong></p><span class="gp-task">\uD83D\uDCA1 Tick <em>Voltage</em> and verify V<sub>1</sub>+V<sub>2</sub> = ${ST.emf}\u202FV, then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:true,I:false},challengeMode:'R',
+   allows:['next','emf','reveal'],advance:{type:'next_click'}},
+  {id:'pd_probe',title:'Placing the V\u2080\u1D64\u209C Probe',
+   getHtml(){const rs=getAllR(ST.net);const r2=rs.length>=2?rs[rs.length-1]:null;return`<p>The V<sub>out</sub> probe shows the voltage across a chosen component. Let\u2019s measure the voltage across ${r2?'<strong>'+r2.id+'</strong>':'R2'}.</p><span class="gp-task">\uD83D\uDCDD Click ${r2?r2.id:'R2'} to select it, then press <strong>\u25C8 Set V<sub>out</sub> Probe</strong>. A purple bracket will appear on the circuit.</span>`;},
+   autoReveal:{R:true,V:false,I:false},challengeMode:'R',
+   allows:['select','vout','emf','reveal'],advance:{type:'vout_set'}},
+  {id:'pd_formula',title:'The Divider Formula',
+   getHtml(){const rs=getAllR(ST.net);if(rs.length<2)return'';const[r1,r2]=rs;const totalR=calcR(ST.net);const vout=fmt(ST.emf*r2.val/totalR);return`<p>The output voltage (across <strong>${r2.id}</strong>) is:</p><div style="text-align:center;font-size:1.05em;font-weight:700;padding:7px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;margin:5px 0">V<sub>out</sub> = \u03B5 \u00D7 R2 \u00F7 (R1+R2) = ${ST.emf} \u00D7 ${r2.val} \u00F7 ${fmt(totalR)} = <strong>${vout}\u202FV</strong></div><span class="gp-task">\uD83D\uDCDD Enter V<sub>out</sub> = <strong>${vout}</strong> in the <em>V<sub>out</sub> Challenge</em> box and Submit.</span>`;},
+   autoReveal:{R:true,V:true,I:false},challengeMode:'Vout',
+   allows:['submit_vout','emf','reveal'],advance:{type:'correct_vout'}},
+  {id:'pd_ratio',title:'The Voltage Ratio',
+   getHtml(){const rs=getAllR(ST.net);if(rs.length<2)return'';const[r1,r2]=rs;return`<p>V<sub>out</sub> depends on the <strong>ratio</strong> R2/(R1+R2):</p><ul style="margin-left:18px;margin-top:4px"><li>R2 \u226B R1: V<sub>out</sub> \u2248 \u03B5 (most voltage across R2)</li><li>R2 \u226A R1: V<sub>out</sub> \u2248 0</li><li>R1 = R2: V<sub>out</sub> = \u03B5/2</li></ul><p style="margin-top:5px">Your divider: R1=${r1.val}\u03A9, R2=${r2.val}\u03A9 \u2192 V<sub>out</sub> = ${fmt(ST.emf*r2.val/calcR(ST.net))}\u202FV</p><span class="gp-task">\uD83D\uDCA1 Use EMF +/\u2212 and observe V<sub>out</sub> changing proportionally. Then click <strong>Next</strong>.</span>`;},
+   autoReveal:{R:true,V:true,I:false},challengeMode:'Vout',
+   allows:['next','emf','reveal'],advance:{type:'next_click'}},
+  {id:'pd_complete',title:'Potential Divider Complete! \uD83C\uDF89',
+   getHtml(){return`<p>Excellent! You have mastered the potential divider.</p><div style="text-align:center;font-weight:700;padding:7px;background:#eff6ff;border:1.5px solid #bfdbfe;border-radius:8px;margin:6px 0">V<sub>out</sub> = \u03B5 \u00D7 R2 / (R1 + R2)</div><p>This principle underpins sensor circuits, audio volume controls, and voltage references throughout IB Physics.</p>`;},
+   autoReveal:{R:false,V:false,I:false},challengeMode:'Vout',
+   allows:['select','add_series','add_parallel','delete','vout','submit','submit_vout','hint','solution','undo','emf','reveal'],advance:null}
+];
+
+const ASS_LABELS=['Series (2R)','Parallel (2R)','Series+Parallel (3R)','Double Parallel (4R)','Complex Mixed (6R)'];
+const ASS_STARS=['★☆☆☆☆','★★☆☆☆','★★★☆☆','★★★★☆','★★★★★'];
+let ASM={circuits:[],current:0,results:[],answered:false};
+
+// ── STATE ──────────────────────────────────────────────────────
+let ST={
+  mode:null, subMode:null, emf:12, net:null,
+  selUids:new Set(), lastSelUid:null,        // multi-select
+  voutNodeUid:null, showVout:false,          // Vout probe
+  undo:[],
+  revR:false, revV:false, revI:false,
+  revHide:{R:new Set(),V:new Set(),I:new Set()},
+  openAcc:null,
+  tutStep:0, tutLog:[], tutMin:false, hint:false,
+  zoom:1.0
+};
+let _uid=0,_rctr=0;
+const newUid=()=>'u'+(++_uid);
+const newRLbl=()=>'R'+(++_rctr);
+const pickVal=()=>NICE[Math.floor(Math.random()*NICE.length)];
+const fmt=v=>{if(v==null)return'?';const a=Math.abs(v);
+  if(a<0.001)return'0';if(a>=100)return v.toFixed(0);if(a>=10)return v.toFixed(1);return v.toFixed(2);};
+
+// ── TREE ───────────────────────────────────────────────────────
+const mkR=()=>({type:'r',uid:newUid(),id:newRLbl(),val:pickVal()});
+const mkS=ch=>({type:'s',uid:newUid(),ch});
+const mkP=br=>({type:'p',uid:newUid(),br});
+function calcR(n){if(!n)return Infinity;if(n.type==='r')return n.val;
+  if(n.type==='s')return n.ch.reduce((s,c)=>s+calcR(c),0);
+  if(n.type==='p')return 1/n.br.reduce((s,b)=>s+1/calcR(b),0);}
+function ann(n,v,i){n._v=v;n._i=i;if(n.type==='r')return;
+  if(n.type==='s')n.ch.forEach(c=>ann(c,i*calcR(c),i));
+  if(n.type==='p')n.br.forEach(b=>ann(b,v,v/calcR(b)));}
+function findN(root,id){if(root.uid===id)return root;
+  if(root.type==='s'){for(const c of root.ch){const r=findN(c,id);if(r)return r;}}
+  if(root.type==='p'){for(const b of root.br){const r=findN(b,id);if(r)return r;}}
+  return null;}
+function repN(root,id,rep){if(root.uid===id)return rep;
+  if(root.type==='s')return{...root,ch:root.ch.map(c=>repN(c,id,rep))};
+  if(root.type==='p')return{...root,br:root.br.map(b=>repN(b,id,rep))};return root;}
+function norm(n){if(!n||n.type==='r')return n;
+  if(n.type==='s'){const ch=n.ch.map(norm);const flat=ch.flatMap(c=>c.type==='s'?c.ch:[c]);return flat.length===1?flat[0]:{...n,ch:flat};}
+  if(n.type==='p'){const br=n.br.map(norm);const flat=br.flatMap(b=>b.type==='p'?b.br:[b]);return flat.length===1?flat[0]:{...n,br:flat};}}
+function delN(root,id){if(root.uid===id)return null;
+  if(root.type==='s'){const ch=root.ch.map(c=>delN(c,id)).filter(Boolean);if(!ch.length)return null;if(ch.length===1)return ch[0];return{...root,ch};}
+  if(root.type==='p'){const br=root.br.map(b=>delN(b,id)).filter(Boolean);if(!br.length)return null;if(br.length===1)return br[0];return{...root,br};}
+  return root;}
+function countR(n){if(!n)return 0;if(n.type==='r')return 1;
+  if(n.type==='s')return n.ch.reduce((s,c)=>s+countR(c),0);
+  if(n.type==='p')return n.br.reduce((s,b)=>s+countR(b),0);}
+function getAllR(n){if(!n)return[];if(n.type==='r')return[n];
+  if(n.type==='s')return n.ch.flatMap(getAllR);if(n.type==='p')return n.br.flatMap(getAllR);}
+
+// ── POSITION MAP ───────────────────────────────────────────────
+// Builds a map of uid->{lx,rx,cy} in network-local coords
+// lx=entry x, rx=exit x, cy=wire y (all relative to network origin)
+function computePos(n,px,py,map){
+  const lay=layout(n);
+  map[n.uid]={lx:px,rx:px+lay.w,cy:py+lay.h/2};
+  if(n.type==='s'){
+    const kids=n.ch.map(c=>layout(c));const h=Math.max(...kids.map(k=>k.h));
+    let x=px;
+    n.ch.forEach((c,i)=>{computePos(c,x,py+(h-kids[i].h)/2,map);x+=kids[i].w;});
+  }else if(n.type==='p'){
+    const brs=n.br.map(b=>layout(b));
+    const mbh=Math.max(...brs.map(b=>b.h),44);
+    const cens=n.br.map((_,i)=>i*(mbh+BGAP)+mbh/2);
+    n.br.forEach((b,i)=>computePos(b,px+RAIL,py+cens[i]-brs[i].h/2,map));
+  }
+}
+
+// Find smallest tree node containing all uids in a set
+function findLCA(root,uids){
+  if(!uids||uids.size===0)return null;
+  function dfs(n){
+    if(uids.has(n.uid))return[n,1];
+    if(n.type==='r')return[null,0];
+    const kids=n.type==='s'?n.ch:n.br;
+    let tot=0,lastLca=null;
+    for(const k of kids){const[kl,kc]=dfs(k);tot+=kc;if(kc>0)lastLca=kl;}
+    if(tot>=uids.size)return[n,tot];
+    if(tot>0)return[lastLca||n,tot];
+    return[null,0];
+  }
+  const[res]=dfs(root);
+  return res||findN(root,[...uids][0]);
+}
+
+// ── REVEAL ─────────────────────────────────────────────────────
+function shouldShow(cat,uid){return ST['rev'+cat]&&!ST.revHide[cat].has(uid);}
+
+// ── GATING ─────────────────────────────────────────────────────
+function tutArr(){return ST.subMode==='potdiv'?POTDIV:ESSENTIALS;}
+function curStep(){return tutArr()[ST.tutStep]||null;}
+function isAllowed(action){
+  if(ST.mode==='sandbox')return true;
+  if(ST.mode==='assessment'){return['submit','hint','solution','reveal'].includes(action);}
+  const step=curStep();if(!step)return true;
+  return step.allows.includes(action);
+}
+function challengeMode(){
+  if(ST.mode==='assessment')return'R';
+  const step=curStep();return step?step.challengeMode||'R':'R';
+}
+
+// ── LAYOUT ─────────────────────────────────────────────────────
+function layout(n){if(n.type==='r')return layR(n);if(n.type==='s')return layS(n);if(n.type==='p')return layP(n);}
+
+function layR(n){
+  const w=WIRE+R_W+WIRE,h=44,cy=h/2;
+  const sel=ST.selUids.has(n.uid);
+  const isVout=ST.voutNodeUid===n.uid;
+  let s='';
+  s+=ln(0,cy,WIRE,cy);
+  if(sel)s+=`<rect x="${WIRE-5}" y="${f(cy-R_H/2-5)}" width="${R_W+10}" height="${R_H+10}" fill="none" stroke="${C.sel}" stroke-width="1.5" rx="6" opacity="0.45" pointer-events="none"/>`;
+  const strokeC=sel?C.sel:(isVout?C.pur:C.res);
+  const strokeW=sel?3:(isVout?2.5:2);
+  s+=`<rect x="${WIRE}" y="${f(cy-R_H/2)}" width="${R_W}" height="${R_H}" fill="${isVout?'#faf5ff':'white'}" stroke="${strokeC}" stroke-width="${strokeW}" rx="2.5" pointer-events="none"/>`;
+  s+=tx(WIRE+R_W/2,cy-R_H/2-5,n.id,C.lbl,10,'middle');
+  if(shouldShow('R',n.uid))s+=tx(WIRE+R_W/2,cy+R_H/2+13,n.val+' \u03A9',C.rv,11,'middle',true);
+  if(shouldShow('V',n.uid)&&n._v!=null)s+=tx(WIRE+R_W/2,cy-R_H/2-18,fmt(n._v)+' V',C.vv,10,'middle',true);
+  if(shouldShow('I',n.uid)&&n._i!=null)s+=tx(WIRE+R_W+WIRE/2+1,cy-9,fmt(n._i)+' A',C.iv,9,'middle');
+  s+=ln(WIRE+R_W,cy,w,cy);
+  s+=`<rect x="0" y="0" width="${w}" height="${h}" fill="transparent" data-uid="${n.uid}" style="cursor:pointer"/>`;
+  return{w,h,svg:s};
+}
+function layS(n){
+  const kids=n.ch.map(layout);const h=Math.max(...kids.map(k=>k.h));const w=kids.reduce((s,k)=>s+k.w,0);
+  let s='',x=0;kids.forEach(k=>{s+=tr(k.svg,x,(h-k.h)/2);x+=k.w;});
+  if(ST.hint&&n.ch.length>1){
+    s=`<rect x="-12" y="-12" width="${w+24}" height="${h+24}" fill="rgba(22,163,74,0.06)" stroke="${C.hs}" stroke-width="1.5" stroke-dasharray="6,3" rx="8" pointer-events="none"/>`+s;
+    s+=tx(5,-17,'series',C.hs,9,'start',true);
+  }
+  return{w,h,svg:s};
+}
+function layP(n){
+  const brs=n.br.map(layout);const mbw=Math.max(...brs.map(b=>b.w));
+  const mbh=Math.max(...brs.map(b=>b.h),44);const nb=brs.length;
+  const H=nb*mbh+(nb-1)*BGAP,W=2*RAIL+mbw,midY=H/2;
+  const cens=brs.map((_,i)=>i*(mbh+BGAP)+mbh/2);
+  const rT=cens[0],rB=cens[nb-1];
+  let s='';
+  s+=ln(0,midY,RAIL,midY);s+=ln(W-RAIL,midY,W,midY);
+  s+=ln(RAIL,rT,RAIL,rB);s+=ln(W-RAIL,rT,W-RAIL,rB);
+  s+=dot(RAIL,midY);s+=dot(W-RAIL,midY);
+  brs.forEach((br,i)=>{const cy=cens[i];const brY=cy-br.h/2;  // ✅ FIX
+    s+=tr(br.svg,RAIL,brY);if(br.w<mbw)s+=ln(RAIL+br.w,cy,RAIL+mbw,cy);
+    s+=dot(RAIL,cy);s+=dot(W-RAIL,cy);});
+  if(ST.hint&&n.br.length>1){
+    s=`<rect x="-4" y="-4" width="${W+8}" height="${H+8}" fill="rgba(217,119,6,0.07)" stroke="${C.hp}" stroke-width="1.5" stroke-dasharray="5,3" rx="6" pointer-events="none"/>`+s;
+    s+=tx(5,-9,'parallel',C.hp,9,'start',true);
+  }
+  return{w:W,h:H,svg:s};
+}
+const f=v=>Math.round(v*10)/10;
+const ln=(x1,y1,x2,y2,c=C.wire)=>`<line x1="${f(x1)}" y1="${f(y1)}" x2="${f(x2)}" y2="${f(y2)}" stroke="${c}" stroke-width="2" stroke-linecap="round"/>`;
+const dot=(cx,cy,c=C.junc)=>`<circle cx="${f(cx)}" cy="${f(cy)}" r="3.5" fill="${c}"/>`;
+const tx=(x,y,str,c,sz,anch='middle',bold=false)=>`<text x="${f(x)}" y="${f(y)}" fill="${c}" font-size="${sz}" text-anchor="${anch}" font-family="Segoe UI,Arial,sans-serif"${bold?' font-weight="700"':''}>${str}</text>`;
+const tr=(svg,dx,dy)=>(dx===0&&dy===0)?svg:`<g transform="translate(${f(dx)},${f(dy)})">${svg}</g>`;
+
+// ── RENDER ─────────────────────────────────────────────────────
+let _posMap={};
+function render(){
+  if(!ST.net)return;
+  const totalR=calcR(ST.net),totalI=ST.emf/totalR;
+  ann(ST.net,ST.emf,totalI);
+  const net=layout(ST.net);
+  // Compute position map
+  _posMap={};computePos(ST.net,0,0,_posMap);
+  // Validate voutNodeUid
+  if(ST.voutNodeUid&&!_posMap[ST.voutNodeUid])ST.voutNodeUid=null;
+
+  const netY=CPAD+net.h/2,botY=netY+Math.max(BMIN,net.h/2+40);
+  const svgW=NX+net.w+CPAD+10,svgH=botY+CPAD;
+  let s=`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${svgW} ${svgH}" width="${svgW}" height="${svgH}">`;
+  s+=`<rect width="${svgW}" height="${svgH}" fill="#f8fafc"/>`;
+  // Outer wires
+  s+=ln(BX,netY,NX,netY);const exitX=NX+net.w;
+  s+=ln(exitX,netY,exitX,botY);s+=ln(exitX,botY,BX,botY);
+  // Battery
+  const battCY=(netY+botY)/2,CG=10,LL=22,SL=13;
+  s+=ln(BX,netY,BX,battCY-CG,C.batt);s+=ln(BX,battCY+CG,BX,botY,C.batt);
+  s+=`<line x1="${BX-LL}" y1="${f(battCY-CG)}" x2="${BX+LL}" y2="${f(battCY-CG)}" stroke="${C.batt}" stroke-width="2"/>`;
+  s+=`<line x1="${BX-SL}" y1="${f(battCY+CG)}" x2="${BX+SL}" y2="${f(battCY+CG)}" stroke="${C.batt}" stroke-width="4"/>`;
+  s+=tx(BX+LL+5,battCY-CG+4,'+',C.lbl,12,'start');
+  s+=tx(BX+SL+5,battCY+CG+4,'\u2212',C.lbl,12,'start');
+  s+=tx(BX+LL+5,battCY+5,'\u03B5\u202F=\u202F'+ST.emf+' V',C.lbl,10,'start');
+  // Network
+  s+=tr(net.svg,NX,netY-net.h/2);
+  // Total current indicator
+  if(ST.revI){const mx=(BX+NX)/2;
+    s+=tx(mx,netY-12,'I\u202F=\u202F'+fmt(totalI)+' A',C.iv,10,'middle');
+    s+=`<polygon points="${f(mx+2)},${f(netY)} ${f(mx+11)},${f(netY-4)} ${f(mx+11)},${f(netY+4)}" fill="${C.iv}" pointer-events="none"/>`;}
+  // Vout probe overlay
+  if(ST.voutNodeUid&&_posMap[ST.voutNodeUid]){
+    const pm=_posMap[ST.voutNodeUid];
+    const netOX=NX,netOY=netY-net.h/2;
+    const entryX=f(netOX+pm.lx),exitX2=f(netOX+pm.rx);
+    const wireY=f(netOY+pm.cy);
+    const probeTopY=f(netOY+pm.cy-36);
+    const midX=f((netOX+pm.lx+netOX+pm.rx)/2);
+    const vNode=findN(ST.net,ST.voutNodeUid);
+    const vVal=vNode&&vNode._v!=null&&ST.showVout?fmt(vNode._v)+'\u202FV':'?';
+    const pur=C.pur;
+    // Dashed probe lines going UP from the wire
+    s+=`<line x1="${entryX}" y1="${wireY}" x2="${entryX}" y2="${f(Number(probeTopY)+14)}" stroke="${pur}" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+    s+=`<line x1="${exitX2}" y1="${wireY}" x2="${exitX2}" y2="${f(Number(probeTopY)+14)}" stroke="${pur}" stroke-width="1.5" stroke-dasharray="4,2"/>`;
+    // Horizontal bracket bar
+    s+=`<line x1="${entryX}" y1="${f(Number(probeTopY)+14)}" x2="${exitX2}" y2="${f(Number(probeTopY)+14)}" stroke="${pur}" stroke-width="1.5"/>`;
+    // Tick marks (terminal indicators)
+    s+=`<line x1="${entryX}" y1="${f(Number(probeTopY)+8)}" x2="${entryX}" y2="${f(Number(probeTopY)+20)}" stroke="${pur}" stroke-width="2"/>`;
+    s+=`<line x1="${exitX2}" y1="${f(Number(probeTopY)+8)}" x2="${exitX2}" y2="${f(Number(probeTopY)+20)}" stroke="${pur}" stroke-width="2"/>`;
+    // Voltmeter circle
+    s+=`<circle cx="${midX}" cy="${f(Number(probeTopY)+2)}" r="12" fill="white" stroke="${pur}" stroke-width="1.5"/>`;
+    s+=tx(midX,f(Number(probeTopY)+6),vVal,pur,8.5,'middle',true);
+    // Vout label above circle
+    s+=tx(midX,f(Number(probeTopY)-12),'V\u2080\u1D64\u209C',pur,8,'middle');
+  }
+  s+='</svg>';
+  document.getElementById('cctr').innerHTML=s;
+  applyZoom();
+  updateUI();
+}
+
+// ── ZOOM ───────────────────────────────────────────────────────
+function applyZoom(){
+  document.getElementById('zoom-wrap').style.transform='scale('+ST.zoom+')';
+  document.getElementById('zoom-pct').textContent=Math.round(ST.zoom*100)+'%';
+}
+function zoomIn(){ST.zoom=Math.min(3,Math.round((ST.zoom+0.1)*10)/10);applyZoom();}
+function zoomOut(){ST.zoom=Math.max(0.3,Math.round((ST.zoom-0.1)*10)/10);applyZoom();}
+function autoFit(){
+  const scroll=document.getElementById('cscroll');
+  const svg=document.querySelector('#cctr svg');
+  if(!svg)return;
+  const sw=parseFloat(svg.getAttribute('width')),sh=parseFloat(svg.getAttribute('height'));
+  const cw=scroll.clientWidth-24,ch=scroll.clientHeight-24;
+  if(sw>0&&sh>0)ST.zoom=Math.min(Math.min(cw/sw,ch/sh),2);
+  applyZoom();
+}
+
+// ── UI ─────────────────────────────────────────────────────────
+function updateUI(){
+  const badge=document.getElementById('mode-badge');
+  if(ST.mode){
+    const labels={sandbox:'\uD83D\uDD2C Sandbox',assessment:'\uD83D\uDCDD Assessment',learning:ST.subMode==='potdiv'?'\u2602\uFE0F Pot. Divider':'\uD83D\uDCDA Essentials'};
+    badge.textContent=labels[ST.mode]||ST.mode;
+    badge.className='mode-badge '+(ST.mode==='sandbox'?'ms':ST.mode==='assessment'?'ma':'ml');
+  }
+  document.getElementById('emf-v').textContent=ST.emf;
+  document.getElementById('undo-btn').disabled=!isAllowed('undo')||ST.undo.length===0;
+  document.getElementById('reset-btn').disabled=!isAllowed('reset');
+  const modSec=document.getElementById('modify-sec');
+  const assSec=document.getElementById('ass-info-sec');
+  if(ST.mode==='assessment'){
+    modSec.style.display='none';assSec.style.display='block';
+    document.getElementById('ass-info-text').innerHTML=`<strong>${ASS_LABELS[ASM.current]||''}</strong><br>Resistors are fixed &mdash; calculate R<sub>total</sub> and Submit.`;
+  }else{modSec.style.display='';assSec.style.display='none';}
+  // Selection
+  if(ST.selUids.size>0&&ST.mode!=='assessment'){
+    const ids=[...ST.selUids];const nodes=ids.map(id=>findN(ST.net,id)).filter(Boolean);
+    document.getElementById('sel-hint').style.display='none';
+    document.getElementById('sel-acts').style.display='block';
+    if(nodes.length===1)document.getElementById('sel-inf').innerHTML=`Selected: <strong>${nodes[0].id}</strong> (${nodes[0].val}\u202F\u03A9)`;
+    else document.getElementById('sel-inf').innerHTML=`Selected: <strong>${nodes.map(n=>n.id).join(', ')}</strong>`;
+    document.getElementById('ser-btn').disabled=!isAllowed('add_series');
+    document.getElementById('par-btn').disabled=!isAllowed('add_parallel');
+    document.getElementById('vout-btn').disabled=!isAllowed('vout');
+    const canDel=isAllowed('delete')&&countR(ST.net)>ST.selUids.size;
+    document.getElementById('del-btn').disabled=!canDel;
+    const lm=document.getElementById('lock-msg');
+    const anyLocked=!isAllowed('add_series')||!isAllowed('add_parallel');
+    lm.style.display=anyLocked?'block':'none';
+    if(anyLocked){lm.textContent=(!isAllowed('add_series')&&!isAllowed('add_parallel'))?'\uD83D\uDD12 Not available at this step':(!isAllowed('add_parallel'))?'\uD83D\uDD12 Parallel not available yet':'\uD83D\uDD12 Series not available at this step';}
+  }else{
+    document.getElementById('sel-hint').style.display='block';
+    document.getElementById('sel-acts').style.display='none';
+  }
+  updateChallengeUI();
+  rebuildAcc();
+  if(ST.mode==='learning')updateGuide();
+  else{document.getElementById('guide-panel').style.display='none';document.getElementById('guide-btn').style.display='none';}
+  updateAssBar();
+  // Vout probe UI
+  const voutRow=document.getElementById('vout-acc-row');
+  const voutSec=document.getElementById('vout-chal-sec');
+  if(ST.voutNodeUid){
+    voutRow.style.display='block';
+    voutSec.style.display='block';
+    updateVoutChallenge();
+  }else{voutRow.style.display='none';voutSec.style.display='none';}
+}
+
+function updateChallengeUI(){
+  const cm=challengeMode();
+  const q=document.getElementById('chal-q');
+  const lhs=document.getElementById('ans-lhs');
+  const unit=document.getElementById('ans-unit');
+  const vbox=document.getElementById('vout-hint-box');
+  if(cm==='Vout'&&ST.voutNodeUid){
+    const vNode=findN(ST.net,ST.voutNodeUid);
+    q.innerHTML='What is the <strong>total resistance</strong>?';
+    lhs.innerHTML='R<sub>total</sub>\u202F=';unit.innerHTML='&Omega;';vbox.style.display='none';
+  }else{
+    q.innerHTML='What is the <strong>total resistance</strong>?';
+    lhs.innerHTML='R<sub>total</sub>\u202F=';unit.innerHTML='&Omega;';vbox.style.display='none';
+  }
+  document.getElementById('sub-btn').disabled=!isAllowed('submit');
+  document.getElementById('ans-in').disabled=!isAllowed('submit');
+}
+
+function updateVoutChallenge(){
+  if(!ST.voutNodeUid)return;
+  const vNode=findN(ST.net,ST.voutNodeUid);
+  if(!vNode)return;
+  const voutQ=document.getElementById('vout-chal-q');
+  const voutLabel=vNode.id||'the selected component';
+  voutQ.innerHTML=`What is <strong>V<sub>out</sub></strong> across ${voutLabel}?`;
+  // Formula hint box
+  const fb=document.getElementById('vout-formula-box');
+  const totalR=calcR(ST.net);
+  const voutVal=vNode._v!=null?fmt(vNode._v)+' V':'?';
+  fb.innerHTML=`V<sub>out</sub> = V<sub>${voutLabel}</sub> = \u03B5 \u00D7 R/${fmt(totalR)}\u202F\u03A9 &nbsp;(<span style="font-size:.78em;color:var(--muted)">use the formula V = I\u00D7R</span>)`;
+  document.getElementById('vout-sub-btn').disabled=!isAllowed('submit')&&!isAllowed('submit_vout');
+  document.getElementById('vout-ans-in').disabled=!isAllowed('submit')&&!isAllowed('submit_vout');
+}
+
+function resetChallenge(){
+  document.getElementById('ans-in').value='';
+  const fb=document.getElementById('fb');fb.textContent='';fb.className='fb';
+  document.getElementById('help-row').style.display='none';
+  document.getElementById('hint-btn').classList.remove('on');
+  hideSol();ST.hint=false;
+}
+function resetVoutChallenge(){
+  document.getElementById('vout-ans-in').value='';
+  const fb=document.getElementById('vout-fb');fb.textContent='';fb.className='fb';
+  document.getElementById('vout-help-row').style.display='none';
+}
+
+// ── ACCORDION ──────────────────────────────────────────────────
+function rebuildAcc(){
+  const rs=getAllR(ST.net);
+  ['R','V','I'].forEach(cat=>{
+    const body=document.getElementById('acc-'+cat);if(!body)return;
+    body.innerHTML=rs.map(r=>{
+      const master=ST['rev'+cat];const checked=master&&!ST.revHide[cat].has(r.uid);
+      const valH=cat==='R'?`<span class="rck-val"> ${r.val}\u03A9</span>`:'';
+      return `<label class="rck"><input type="checkbox" ${checked?'checked':''}${!master?' disabled':''}  onchange="setIndRev('${cat}','${r.uid}',this.checked)"><span class="rck-lbl">${r.id}</span>${valH}</label>`;
+    }).join('');
+    const ck=document.getElementById('ck-'+cat.toLowerCase());
+    if(ck&&rs.length>0){const master=ST['rev'+cat];
+      if(master){const hc=rs.filter(r=>ST.revHide[cat].has(r.uid)).length;ck.indeterminate=hc>0&&hc<rs.length;ck.checked=hc<rs.length;}
+      else{ck.indeterminate=false;ck.checked=false;}}
+  });
+}
+function toggleAcc(cat){
+  const was=ST.openAcc===cat;
+  if(ST.openAcc){document.getElementById('acc-'+ST.openAcc).classList.remove('show');document.getElementById('arr-'+ST.openAcc).classList.remove('open');}
+  ST.openAcc=was?null:cat;
+  if(ST.openAcc){document.getElementById('acc-'+ST.openAcc).classList.add('show');document.getElementById('arr-'+ST.openAcc).classList.add('open');}
+}
+function setMaster(cat,val){ST['rev'+cat]=val;if(val)ST.revHide[cat].clear();render();}
+function setIndRev(cat,uid,show){if(show)ST.revHide[cat].delete(uid);else ST.revHide[cat].add(uid);render();}
+function setShowVout(val){ST.showVout=val;render();}
+
+// ── TUTORIAL ───────────────────────────────────────────────────
+function enterStep(i){
+  const arr=tutArr();if(i>=arr.length)return;
+  ST.tutStep=i;const step=arr[i];
+  ['R','V','I'].forEach(cat=>{const v=step.autoReveal[cat];if(v===undefined)return;
+    ST['rev'+cat]=v;const el=document.getElementById('ck-'+cat.toLowerCase());
+    if(el){el.checked=v;el.indeterminate=false;}if(v)ST.revHide[cat].clear();});
+  ST.tutMin=false;render();updateGuide();
+}
+function updateGuide(){
+  const panel=document.getElementById('guide-panel');const guideBtn=document.getElementById('guide-btn');
+  if(ST.mode!=='learning'){panel.style.display='none';guideBtn.style.display='none';return;}
+  panel.style.display='block';guideBtn.style.display=ST.tutMin?'inline-block':'none';
+  panel.classList.toggle('min',ST.tutMin);
+  document.getElementById('gp-min-lbl').textContent=ST.tutMin?'+ Show':'\u2212 Hide';
+  const arr=tutArr();const step=arr[ST.tutStep];if(!step)return;
+  document.getElementById('gp-num').textContent='Step '+(ST.tutStep+1)+'/'+arr.length;
+  document.getElementById('gp-title').textContent=step.title;
+  document.getElementById('gp-body').innerHTML=step.getHtml();
+  const foot=document.getElementById('gp-foot');
+  foot.style.display=(step.advance&&step.advance.type==='next_click')?'flex':'none';
+}
+function toggleGuideMin(){ST.tutMin=!ST.tutMin;updateGuide();}
+function showGuide(){ST.tutMin=false;updateGuide();}
+function handleNextClick(){if(!isAllowed('next'))return;const step=curStep();if(step&&step.advance&&step.advance.type==='next_click')doAdvance();}
+function doAdvance(){
+  const arr=tutArr();const step=arr[ST.tutStep];
+  ST.tutLog.push({stepNum:ST.tutStep+1,title:step.title,html:step.getHtml()});
+  enterStep(ST.tutStep+1);
+}
+function onCircuitChanged(changeType){
+  if(ST.mode!=='learning')return;const step=curStep();if(!step||!step.advance)return;
+  if(step.advance.type==='circuit_change'&&step.advance.changeType===changeType)setTimeout(doAdvance,450);
+  else setTimeout(updateGuide,50);
+}
+function openLog(){
+  const arr=tutArr();
+  document.getElementById('log-body').innerHTML=arr.map((step,i)=>{
+    const done=i<ST.tutStep,curr=i===ST.tutStep,todo=i>ST.tutStep;
+    const ic=done?'done':curr?'curr':'todo';const txt=done?'\u2713':curr?'\u25CF':(i+1);
+    return `<div class="log-entry"><div class="log-ehd"><span class="log-ic ${ic}">${txt}</span><span class="log-etitle${todo?' todo':''}">${i+1}/${arr.length} ${step.title}</span></div>${!todo?'<div class="log-ebody">'+step.getHtml()+'</div>':''}</div>`;
+  }).join('');
+  document.getElementById('log-modal').classList.add('open');
+}
+function closeLog(){document.getElementById('log-modal').classList.remove('open');}
+
+// ── VOUT PROBE ─────────────────────────────────────────────────
+function setVoutNode(){
+  if(ST.selUids.size===0)return;
+  let uid;
+  if(ST.selUids.size===1){uid=[...ST.selUids][0];}
+  else{const lca=findLCA(ST.net,ST.selUids);uid=lca?lca.uid:[...ST.selUids][0];}
+  // Toggle: clicking same node again removes probe
+  if(ST.voutNodeUid===uid){ST.voutNodeUid=null;ST.showVout=false;const ck=document.getElementById('ck-vout');if(ck)ck.checked=false;}
+  else{ST.voutNodeUid=uid;ST.showVout=false;const ck=document.getElementById('ck-vout');if(ck)ck.checked=false;}
+  ST.selUids.clear();ST.lastSelUid=null;
+  resetVoutChallenge();render();
+  if(ST.voutNodeUid)toast('V\u2080\u1D64\u209C probe set. Tick \u201CV\u2080\u1D64\u209C\u201D in Reveal Values to show the value.');
+}
+
+// ── HINT (incl. parallel scaffold) ─────────────────────────────
+function buildCalcHint(n){
+  const steps=[];
+  function walk(node){
+    if(node.type==='r')return{label:node.id,val:node.val};
+    if(node.type==='s'){const kids=node.ch.map(walk);const t=calcR(node);return{label:'('+kids.map(k=>k.label).join('+')+')',val:t};}
+    if(node.type==='p'){
+      const brs=node.br.map(walk);const t=calcR(node);
+      const inv=brs.reduce((s,b)=>s+1/b.val,0);
+      steps.push(`Parallel (${brs.map(b=>b.label).join(', ')}): 1/R = ${brs.map(b=>'1/'+fmt(b.val)).join(' + ')} = ${fmt(inv)} \u2192 R = <strong>${fmt(t)}\u202F\u03A9</strong>`);
+      return{label:'('+brs.map(b=>b.label).join('\u2016')+')',val:t};
+    }
+  }
+  walk(n);
+  return steps.length?'<p style="margin-bottom:4px;font-weight:600">Scaffold:</p>'+steps.map(s=>'<p style="margin:3px 0;padding:3px 8px;background:#fef9c3;border-radius:4px">'+s+'</p>').join('')
+    :'<p>Use the topology hint outlines to identify groups.</p>';
+}
+function toggleHint(){
+  if(!isAllowed('hint'))return;
+  const step=curStep();const isParStep=step&&(step.id==='parallel_answer'||step.id==='pd_formula');
+  if(isParStep){
+    const el=document.getElementById('sol-steps');
+    el.innerHTML='<div style="padding:4px 0"><b style="color:#854d0e">\uD83D\uDCA1 Calculation Scaffold</b></div>'+buildCalcHint(ST.net);
+    document.getElementById('solp').classList.add('open');
+    ST.hint=!ST.hint;render();return;
+  }
+  ST.hint=!ST.hint;
+  const btn=document.getElementById('hint-btn');
+  btn.textContent=ST.hint?'\uD83D\uDCA1 Hide Hint':'\uD83D\uDCA1 Hint';
+  btn.classList.toggle('on',ST.hint);
+  render();if(ST.hint)toast('\uD83D\uDFE2 Green = series (outer)\u2003\uD83D\uDFE1 Amber = parallel (inner)');
+}
+
+// ── CHALLENGE: Rtotal ──────────────────────────────────────────
+function checkAns(){
+  if(!isAllowed('submit'))return;
+  const raw=document.getElementById('ans-in').value.trim();
+  const inp=parseFloat(raw);
+  if(!raw||isNaN(inp)||inp<0){setFb('Please enter a positive number.','no');return;}
+  const correct=calcR(ST.net);const tol=Math.max(correct*0.02,0.06);const ok=Math.abs(inp-correct)<=tol;
+  if(ok){
+    setFb('\u2713 Correct! R\u209C\u2092\u209C\u2090\u2097 = '+fmt(correct)+' \u03A9','ok');
+    if(ST.mode==='learning'){const step=curStep();
+      if(step&&step.advance&&step.advance.type==='correct_answer'){
+        if(countR(ST.net)>=(step.advance.minR||0))setTimeout(doAdvance,600);
+        else setFb('\u2713 Correct! Now add more resistors.','ok');}}
+    if(ST.mode==='assessment'&&!ASM.answered){ASM.answered=true;ASM.results.push(true);
+      document.getElementById('ass-next-btn').classList.add('ass-next-show');updateAssBar();}
+  }else{
+    setFb('\u2717 Not quite.'+(Math.abs(inp-correct)<=correct*0.15?' (close\u2014check rounding!)':''),'no');
+    if(isAllowed('hint')||isAllowed('solution'))document.getElementById('help-row').style.display='flex';
+    if(ST.mode==='assessment'&&!ASM.answered){ASM.answered=true;ASM.results.push(false);
+      document.getElementById('ass-next-btn').classList.add('ass-next-show');updateAssBar();}
+  }
+}
+function setFb(msg,cls){const el=document.getElementById('fb');el.textContent=msg;el.className='fb '+cls;}
+
+// ── CHALLENGE: Vout ────────────────────────────────────────────
+function checkVout(){
+  if(!ST.voutNodeUid)return;
+  const raw=document.getElementById('vout-ans-in').value.trim();
+  const inp=parseFloat(raw);
+  if(!raw||isNaN(inp)||inp<0){setVoutFb('Please enter a positive number.','no');return;}
+  const vNode=findN(ST.net,ST.voutNodeUid);
+  if(!vNode||vNode._v==null){setVoutFb('Circuit not yet solved.','no');return;}
+  const correct=vNode._v;const tol=Math.max(correct*0.02,0.06);const ok=Math.abs(inp-correct)<=tol;
+  if(ok){
+    ST.showVout=true;const ck=document.getElementById('ck-vout');if(ck)ck.checked=true;
+    setVoutFb('\u2713 Correct! V\u2080\u1D64\u209C = '+fmt(correct)+' V','ok');render();
+    // Tutorial advance on correct_vout
+    if(ST.mode==='learning'){const step=curStep();
+      if(step&&step.advance&&step.advance.type==='correct_vout')setTimeout(doAdvance,600);}
+  }else{
+    setVoutFb('\u2717 Not quite.'+(Math.abs(inp-correct)<=correct*0.15?' (close\u2014check rounding!)':''),'no');
+    document.getElementById('vout-help-row').style.display='flex';
+  }
+}
+function setVoutFb(msg,cls){const el=document.getElementById('vout-fb');el.textContent=msg;el.className='fb '+cls;}
+function showVoutSol(){
+  if(!ST.voutNodeUid)return;
+  const vNode=findN(ST.net,ST.voutNodeUid);if(!vNode)return;
+  const totalR=calcR(ST.net),I=ST.emf/totalR;
+  const vr=calcR(vNode),vv=I*vr;
+  const el=document.getElementById('sol-steps');
+  el.innerHTML=
+    `<div class="ss"><span class="sn">1</span><span>I = \u03B5/R<sub>total</sub> = ${ST.emf}/${fmt(totalR)} = ${fmt(I)}\u202FA</span></div>`+
+    `<div class="ss"><span class="sn">2</span><span>R(${vNode.id||'Vout node'}) = ${fmt(vr)}\u202F\u03A9</span></div>`+
+    `<div class="ss"><span class="sn fin">\u2713</span><span><strong>V\u2080\u1D64\u209C = I \u00D7 R = ${fmt(I)} \u00D7 ${fmt(vr)} = ${fmt(vv)}\u202FV</strong></span></div>`;
+  document.getElementById('solp').classList.add('open');
+}
+
+// ── SOLUTION ───────────────────────────────────────────────────
+function showSol(){
+  if(!isAllowed('solution'))return;
+  const sol=genSol(ST.net);const el=document.getElementById('sol-steps');
+  el.innerHTML=(sol.steps.length?sol.steps.map((st,i)=>`<div class="ss"><span class="sn">${i+1}</span><span>${st}</span></div>`).join(''):'')+
+    `<div class="ss"><span class="sn fin">\u2713</span><span><strong>Total resistance = ${fmt(calcR(ST.net))} \u03A9</strong></span></div>`;
+  document.getElementById('solp').classList.add('open');
+}
+function hideSol(){document.getElementById('solp').classList.remove('open');}
+function genSol(n){
+  if(n.type==='r')return{label:n.id,val:n.val,steps:[]};
+  if(n.type==='s'){const kids=n.ch.map(genSol);const steps=kids.flatMap(k=>k.steps);const t=calcR(n);
+    steps.push(`<em>${kids.map(k=>k.label).join(', ')}</em> in <strong>series</strong>: R = ${kids.map(k=>fmt(k.val)).join(' + ')} = <strong>${fmt(t)}\u202F\u03A9</strong>`);
+    return{label:`(${kids.map(k=>k.label).join('+')})`,val:t,steps};}
+  if(n.type==='p'){const brs=n.br.map(genSol);const steps=brs.flatMap(b=>b.steps);const t=calcR(n);
+    const inv=brs.reduce((s,b)=>s+1/b.val,0);
+    steps.push(`<em>${brs.map(b=>b.label).join(', ')}</em> in <strong>parallel</strong>: 1/R = ${brs.map(b=>`1/${fmt(b.val)}`).join(' + ')} = ${fmt(inv)} \u2192 R = <strong>${fmt(t)}\u202F\u03A9</strong>`);
+    return{label:`(${brs.map(b=>b.label).join('\u2016')})`,val:t,steps};}
+}
+
+// ── CIRCUIT OPERATIONS ─────────────────────────────────────────
+function addComp(type){
+  if(!ST.lastSelUid)return;if(!isAllowed('add_'+type))return;
+  const maxR=ST.mode==='assessment'?MAX_R_ASS:MAX_R;
+  if(countR(ST.net)>=maxR){toast('Maximum '+maxR+' resistors reached!');return;}
+  saveUndo();const target=findN(ST.net,ST.lastSelUid);if(!target)return;
+  const nr=mkR();
+  ST.net=norm(repN(ST.net,ST.lastSelUid,type==='series'?mkS([target,nr]):mkP([target,nr])));
+  ST.selUids.clear();ST.lastSelUid=null;ST.hint=false;
+  resetChallenge();onCircuitChanged(type);render();
+}
+function deleteSelected(){
+  if(ST.selUids.size===0)return;if(!isAllowed('delete'))return;
+  if(countR(ST.net)<=ST.selUids.size){toast('Cannot delete all resistors.');return;}
+  saveUndo();
+  let net=ST.net;
+  for(const uid of ST.selUids){
+    const r=norm(delN(net,uid));if(r)net=r;
+    if(ST.voutNodeUid===uid)ST.voutNodeUid=null;
+  }
+  ST.net=net||mkR();ST.selUids.clear();ST.lastSelUid=null;ST.hint=false;
+  resetChallenge();resetVoutChallenge();render();toast('Resistor(s) deleted.');
+}
+function saveUndo(){ST.undo.push(JSON.stringify({net:ST.net,rc:_rctr,vout:ST.voutNodeUid}));if(ST.undo.length>15)ST.undo.shift();}
+function doUndo(){
+  if(!ST.undo.length||!isAllowed('undo'))return;
+  const p=JSON.parse(ST.undo.pop());ST.net=p.net;_rctr=p.rc;ST.voutNodeUid=p.vout||null;
+  ST.selUids.clear();ST.lastSelUid=null;ST.hint=false;resetChallenge();resetVoutChallenge();render();
+}
+function doReset(){
+  if(!isAllowed('reset')){toast('Reset is locked during the tutorial.');return;}
+  if(!confirm('Reset the circuit?'))return;
+  _rctr=0;ST.undo=[];ST.selUids.clear();ST.lastSelUid=null;ST.hint=false;
+  ST.revHide={R:new Set(),V:new Set(),I:new Set()};
+  ST.voutNodeUid=null;ST.showVout=false;
+  ST.net=mkR();resetChallenge();resetVoutChallenge();render();
+}
+function changeEmf(d){ST.emf=Math.max(1,Math.min(30,ST.emf+d));render();}
+
+// ── ASSESSMENT ─────────────────────────────────────────────────
+function genAssCircuit(level){
+  _rctr=0;
+  switch(level){
+    case 1:return mkS([mkR(),mkR()]);
+    case 2:return mkP([mkR(),mkR()]);
+    case 3:return norm(mkS([mkP([mkR(),mkR()]),mkR()]));
+    case 4:return norm(mkS([mkP([mkR(),mkR()]),mkP([mkR(),mkR()])]));
+    default:return norm(mkS([mkR(),mkP([mkR(),mkS([mkR(),mkR()])]),mkP([mkR(),mkR()])]));
+  }
+}
+function startAssessment(){
+  document.getElementById('score-screen').classList.remove('show');
+  ASM={circuits:[],current:0,results:[],answered:false};
+  for(let i=1;i<=5;i++)ASM.circuits.push(genAssCircuit(i));
+  loadAssCircuit(0);
+}
+function loadAssCircuit(i){
+  ASM.current=i;ASM.answered=false;ST.net=ASM.circuits[i];
+  ST.selUids.clear();ST.lastSelUid=null;ST.undo=[];ST.hint=false;
+  ST.revR=false;ST.revV=false;ST.revI=false;
+  ST.revHide={R:new Set(),V:new Set(),I:new Set()};
+  ST.voutNodeUid=null;ST.showVout=false;
+  ['ck-r','ck-v','ck-i'].forEach(id=>{const el=document.getElementById(id);if(el){el.checked=false;el.indeterminate=false;}});
+  document.getElementById('ass-next-btn').classList.remove('ass-next-show');
+  resetChallenge();resetVoutChallenge();render();
+}
+function assNext(){if(ASM.current+1>=5){showScore();return;}loadAssCircuit(ASM.current+1);}
+function showScore(){
+  document.getElementById('score-screen').classList.add('show');
+  const ok=ASM.results.filter(Boolean).length;
+  const sc=document.getElementById('sc-score');sc.textContent=ok+'/5';
+  sc.style.color=ok>=4?'var(--grn)':ok>=2?'#d97706':'var(--red)';
+  document.getElementById('sc-results').innerHTML=ASM.circuits.map((_,i)=>{const g=ASM.results[i];return`<div class="sc-item ${g?'ok':'no'}">${g?'\u2713':'\u2717'} Circuit ${i+1}: ${ASS_LABELS[i]}</div>`;}).join('');
+}
+function updateAssBar(){
+  const bar=document.getElementById('ass-bar');
+  if(ST.mode!=='assessment'){bar.classList.remove('show');return;}bar.classList.add('show');
+  document.getElementById('ass-label').textContent='Circuit '+(ASM.current+1)+' / 5';
+  document.getElementById('ass-diff').textContent=ASS_STARS[ASM.current]||'';
+  document.getElementById('ass-dots').innerHTML=Array.from({length:5},(_,i)=>{
+    let cls='ass-dot';if(i<ASM.results.length)cls+=ASM.results[i]?' ok':' no';else if(i===ASM.current)cls+=' curr';
+    return`<div class="${cls}"></div>`;}).join('');
+}
+
+// ── MODE MANAGEMENT ────────────────────────────────────────────
+function showLearningPicker(){document.getElementById('modal-main').style.display='none';document.getElementById('modal-learning').classList.add('show');}
+function showMainPicker(){document.getElementById('modal-learning').classList.remove('show');document.getElementById('modal-main').style.display='';}
+function selectMode(mode,sub){
+  ST.mode=mode;ST.subMode=sub;
+  document.getElementById('modal').classList.add('gone');
+  document.getElementById('modal-learning').classList.remove('show');document.getElementById('modal-main').style.display='';
+  initCircuit();
+}
+function openModal(){document.getElementById('modal').classList.remove('gone');}
+function initCircuit(){
+  _rctr=0;ST.selUids.clear();ST.lastSelUid=null;ST.undo=[];ST.hint=false;
+  ST.revR=false;ST.revV=false;ST.revI=false;
+  ST.revHide={R:new Set(),V:new Set(),I:new Set()};
+  ST.openAcc=null;ST.tutStep=0;ST.tutLog=[];ST.tutMin=false;
+  ST.voutNodeUid=null;ST.showVout=false;ST.zoom=1.0;
+  ['ck-r','ck-v','ck-i','ck-vout'].forEach(id=>{const el=document.getElementById(id);if(el){el.checked=false;el.indeterminate=false;}});
+  ['R','V','I'].forEach(cat=>{const b=document.getElementById('acc-'+cat);const a=document.getElementById('arr-'+cat);if(b)b.classList.remove('show');if(a)a.classList.remove('open');});
+  document.getElementById('score-screen').classList.remove('show');
+  resetChallenge();resetVoutChallenge();
+  if(ST.mode==='assessment'){startAssessment();return;}
+  ST.net=mkR();
+  if(ST.mode==='learning')enterStep(0);
+  else render();
+  // Auto-fit after brief delay for DOM settle
+  setTimeout(autoFit,120);
+}
+
+// ── TOAST ──────────────────────────────────────────────────────
+function toast(msg){
+  const t=document.createElement('div');t.className='toast';t.textContent=msg;
+  document.body.appendChild(t);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>t.classList.add('show')));
+  setTimeout(()=>{t.classList.remove('show');setTimeout(()=>t.remove(),400);},4000);
+}
+
+// ── EVENTS ─────────────────────────────────────────────────────
+document.getElementById('cctr').addEventListener('click',e=>{
+  const el=e.target.closest('[data-uid]');
+  if(el){
+    if(!isAllowed('select'))return;
+    const id=el.getAttribute('data-uid');
+    if(ST.selUids.has(id)){ST.selUids.delete(id);if(ST.lastSelUid===id)ST.lastSelUid=[...ST.selUids].at(-1)||null;}
+    else{ST.selUids.add(id);ST.lastSelUid=id;}
+    render();
+  }else{if(ST.selUids.size>0){ST.selUids.clear();ST.lastSelUid=null;render();}}
+});
+
+// Tutorial: check for vout_set advance
+const _origSetVout=setVoutNode;
+setVoutNode=function(){
+  _origSetVout();
+  if(ST.mode==='learning'){const step=curStep();
+    if(step&&step.advance&&step.advance.type==='vout_set'&&ST.voutNodeUid)setTimeout(doAdvance,450);}
+};
+</script>
+</body>
+</html>
